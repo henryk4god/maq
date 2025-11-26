@@ -369,189 +369,177 @@
   </div>
 
   <!-- JavaScript (with improved parsing logic) -->
-    // JavaScript (with improved parsing logic)
   <script>
     // Wait for DOM to be fully loaded
     document.addEventListener('DOMContentLoaded', function() {
-      // Get DOM elements
-      const fetchBtn = document.getElementById('maqFetchBtn');
-      const nicheInput = document.getElementById('maqNicheInput');
-      const resultsContainer = document.getElementById('maqResults');
-      const loader = document.getElementById('maqLoader');
-      const errorContainer = document.getElementById('maqError');
-      const copyAllContainer = document.querySelector('.maq-copy-all-container');
-      const copyAllBtn = document.getElementById('maqCopyAllBtn');
-      
-      // API configuration - *** UPDATED TO POINT TO GOOGLE APPS SCRIPT BACKEND ***
-      // IMPORTANT: Replace 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' with the URL you copied after deployment.
-      const API_URL = 'https://script.google.com/macros/s/AKfycbyMWxkhAy4Lf7MHCjNbV_jNpDnQtnaYPMNfD7PxnQ6FAEDx0ET7FfOqRZAuGBokVbmipQ/exec'; 
-      
-      // Add click handler to fetch button
-      fetchBtn.addEventListener('click', async function() {
-        // Reset UI state
-        resultsContainer.style.display = 'none';
-        resultsContainer.innerHTML = '<div class="maq-copy-all-container"><button id="maqCopyAllBtn" class="maq-copy-all-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy All Results</button></div>';
-        errorContainer.style.display = 'none';
-        
-        // Get niche value
-        const niche = nicheInput.value.trim();
-        
-        // Show loading state
-        fetchBtn.disabled = true;
-        fetchBtn.classList.add('loading');
-        loader.style.display = 'block';
-        
-        try {
-          // *** SIMPLIFIED FRONTEND REQUEST: We only send the niche now ***
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              // The Authorization header and API key are now handled securely by the Apps Script backend
-            },
-            body: JSON.stringify({
-              niche: niche // Send the niche to the backend
-            })
-          });
-          
-          // Check for errors
-          if (!response.ok) {
-            throw new Error(`Service request failed with status ${response.status}`);
-          }
-          
-          // Process response
-          const data = await response.json();
-          
-          // Check for backend-reported errors (like API key failure)
-          if (data.error) {
-              throw new Error(data.error);
-          }
-          
-          const content = data.choices[0].message.content;
-          
-          // Display results
-          displayResults(content);
-        } catch (error) {
-          // Handle errors
-          console.error('Error fetching data:', error);
-          // Show user-friendly error from backend or fetch failure
-          showError(error.message || 'Failed to fetch questions. Please check the backend deployment.'); 
-        } finally {
-          // Reset loading state
-          fetchBtn.disabled = false;
-          fetchBtn.classList.remove('loading');
-          loader.style.display = 'none';
-        }
-      });
-      
-      // ... (rest of your existing displayResults, extractValue, showError, and copyToClipboard functions remain unchanged) ...
-      
-      // Display results in the container - IMPROVED PARSING
-      function displayResults(content) {
-        console.log('Raw API response:', content); // For debugging
-        
-        // Improved parsing - look for all instances of "Question:"
-        const questionRegex = /Question:\s*(.+?)(?=\nQuestion:|$)/gs;
-        const matches = [...content.matchAll(questionRegex)];
-        
-        console.log('Parsed questions:', matches); // For debugging
-        
-        // Clear previous results container content, except for the copy all container
-        const copyAllHtml = document.querySelector('.maq-copy-all-container').outerHTML;
-        resultsContainer.innerHTML = copyAllHtml;
+        // Get DOM elements
+        const fetchBtn = document.getElementById('maqFetchBtn');
+        const nicheInput = document.getElementById('maqNicheInput');
+        const resultsContainer = document.getElementById('maqResults');
+        const loader = document.getElementById('maqLoader');
+        const errorContainer = document.getElementById('maqError');
+        const copyAllContainer = document.querySelector('.maq-copy-all-container');
+        const copyAllBtn = document.getElementById('maqCopyAllBtn');
 
-        matches.forEach((match, index) => {
-          const question = match[1].trim();
-          
-          if (question && !question.includes('Question:')) {
-            const card = document.createElement('div');
-            card.className = 'maq-card';
-            
-            card.innerHTML = `
-              <button class="maq-copy-btn" title="Copy to clipboard">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                Copy
-              </button>
-              <div class="maq-question">${question}</div>
-            `;
-            
-            resultsContainer.appendChild(card);
-            
-            // Add click handler to copy button
-            const copyBtn = card.querySelector('.maq-copy-btn');
-            copyBtn.addEventListener('click', () => {
-              const cardText = question;
-              copyToClipboard(cardText, copyBtn);
-            });
-          }
-        });
+        // 🎯 IMPORTANT: Replace this with your deployed Google Apps Script Web App URL
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxgOeSRa3QtOnmkt1Hrp-Ex4NxJ_aG503stoUeQRz-tVH-MOGPGj37_hT7gyogtTZx4vg/exec'; 
         
-        // Re-attach copyAllBtn handler after replacing innerHTML
-        const currentCopyAllBtn = document.getElementById('maqCopyAllBtn');
+        // Add click handler to fetch button
+        fetchBtn.addEventListener('click', async function() {
+            // Reset UI state
+            resultsContainer.style.display = 'none';
+            // Re-initialize the results container content
+            resultsContainer.innerHTML = '<div class="maq-copy-all-container" style="display: none;"><button id="maqCopyAllBtn" class="maq-copy-all-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy All Results</button></div>';
+            errorContainer.style.display = 'none';
 
-        if (resultsContainer.children.length > 1) { // Check if results were actually added (initial container + cards)
-          resultsContainer.style.display = 'block';
-          document.querySelector('.maq-copy-all-container').style.display = 'block';
-          
-          // Re-attach click handler to copy all button
-          currentCopyAllBtn.addEventListener('click', () => {
-            const allCards = Array.from(document.querySelectorAll('.maq-card'));
-            let allText = '';
-            
-            allCards.forEach((card, index) => {
-              const question = card.querySelector('.maq-question').textContent;
-              allText += `${index + 1}. ${question}\n\n`;
-            });
-            
-            copyToClipboard(allText, currentCopyAllBtn);
-          });
-        } else {
-            // Fallback to original parsing method (omitted here for brevity, assuming your existing code handles it)
-        }
-      }
-      
-      // Extract value from text based on key
-      function extractValue(text, key) {
-        const startIndex = text.indexOf(key);
-        if (startIndex === -1) return null;
-        
-        const endIndex = text.indexOf('\n', startIndex);
-        const value = endIndex === -1 
-          ? text.substring(startIndex + key.length).trim()
-          : text.substring(startIndex + key.length, endIndex).trim();
-        
-        return value || null;
-      }
-      
-      // Show error message
-      function showError(message) {
-        errorContainer.textContent = message;
-        errorContainer.style.display = 'block';
-      }
-      
-      // Copy text to clipboard
-      function copyToClipboard(text, button) {
-        navigator.clipboard.writeText(text).then(() => {
-          // Change button text temporarily
-          const originalText = button.innerHTML;
-          button.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 6L9 17l-5-5"></path>
-            </svg>
-            Copied!
-          `;
-          
-          setTimeout(() => {
-            button.innerHTML = originalText;
-          }, 2000);
-        }).catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Failed to copy text to clipboard');
+            // Get niche value
+            const niche = nicheInput.value.trim();
+
+            // 1. 🎯 CORS FIX: Create FormData object
+            const formData = new FormData();
+            formData.append('niche', niche); // This will be read by e.parameter.niche in GAS
+
+            // Show loading state
+            fetchBtn.disabled = true;
+            fetchBtn.classList.add('loading');
+            loader.style.display = 'block';
+
+            try {
+                // 2. 🎯 Fetch to Apps Script URL
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    // IMPORTANT: Do NOT set Content-Type header. 
+                    // The browser handles it for FormData, which enables the CORS fix.
+                    body: formData 
+                });
+
+                // Check for errors (from network or GAS)
+                if (!response.ok) {
+                    throw new Error(`Backend request failed with status ${response.status}`);
+                }
+                
+                // Process response from GAS
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'The backend returned an unknown error.');
+                }
+                
+                const content = data.content; // The raw AI response text
+
+                // Display results
+                displayResults(content);
+            } catch (error) {
+                // Handle errors
+                console.error('Error fetching data:', error);
+                showError(error.message || 'Failed to fetch questions. Please check the Web App URL and try again.');
+            } finally {
+                // Reset loading state
+                fetchBtn.disabled = false;
+                fetchBtn.classList.remove('loading');
+                loader.style.display = 'none';
+            }
         });
-      }
+
+        // Display results in the container - KEEPING YOUR ORIGINAL PARSING LOGIC
+        function displayResults(content) {
+            console.log('Raw API response:', content);
+
+            // Re-select copy-all button after re-initialization
+            const currentCopyAllBtn = document.getElementById('maqCopyAllBtn');
+            const currentCopyAllContainer = resultsContainer.querySelector('.maq-copy-all-container');
+            
+            // Clear existing cards, but keep the copy-all container
+            Array.from(resultsContainer.children).forEach(child => {
+                if (child !== currentCopyAllContainer) {
+                    child.remove();
+                }
+            });
+
+            const questionRegex = /Question:\s*(.+?)(?=\nQuestion:|$)/gs;
+            const matches = [...content.matchAll(questionRegex)];
+
+            let foundQuestions = false;
+            
+            matches.forEach((match, index) => {
+                const question = match[1].trim();
+
+                if (question && !question.includes('Question:')) {
+                    foundQuestions = true;
+                    const card = document.createElement('div');
+                    card.className = 'maq-card';
+
+                    card.innerHTML = `
+                        <button class="maq-copy-btn" title="Copy to clipboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy
+                        </button>
+                        <div class="maq-question">${question}</div>
+                    `;
+
+                    // Insert card after the copy-all container
+                    currentCopyAllContainer.insertAdjacentElement('afterend', card);
+
+                    // Add click handler to copy button
+                    const copyBtn = card.querySelector('.maq-copy-btn');
+                    copyBtn.addEventListener('click', () => {
+                        const cardText = question;
+                        copyToClipboard(cardText, copyBtn);
+                    });
+                }
+            });
+
+            if (foundQuestions) {
+                resultsContainer.style.display = 'block';
+                currentCopyAllContainer.style.display = 'block';
+
+                // Re-add click handler to copy all button
+                currentCopyAllBtn.onclick = () => {
+                    const allCards = Array.from(document.querySelectorAll('.maq-card'));
+                    let allText = '';
+                    
+                    allCards.forEach((card, index) => {
+                        const question = card.querySelector('.maq-question').textContent;
+                        allText += `${index + 1}. ${question}\n\n`;
+                    });
+                    
+                    copyToClipboard(allText, currentCopyAllBtn);
+                };
+            } else {
+                showError('No valid questions found in the response. Please try again.');
+                currentCopyAllContainer.style.display = 'none';
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+        }
+
+        // Copy text to clipboard
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Change button text temporarily
+                const originalHTML = button.innerHTML;
+                button.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                    Copied!
+                `;
+
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy text to clipboard');
+            });
+        }
     });
-  </script>
+</script>
 </div>
